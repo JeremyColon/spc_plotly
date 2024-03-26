@@ -7,7 +7,7 @@ XmR Charts allow the viewer to quickly identify signals in a data set and ignore
 ## Installation
 
 ```shell
-pip install spc_plotly
+pip install spc-plotly
 ```
 
 ## Usage
