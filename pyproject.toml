@@ -1,0 +1,32 @@
+# pyproject.toml
+
+[build-system]
+requires      = ["setuptools>=65.3.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "spc-plotly"
+version = "0.1.0"
+description = "XmR charts with Plotly"
+readme = "README.md"
+authors = [{ name = "Jeremy Colón", email = "jeremycolon24@gmail.com" }]
+classifiers = [
+     "Intended Audience :: Developers",
+     "License :: OSI Approved :: MIT License",
+     "Programming Language :: Python",
+     "Programming Language :: Python :: 3",
+     "Programming Language :: Python :: 3.6",
+     "Programming Language :: Python :: 3.7",
+     "Programming Language :: Python :: 3.8",
+     "Programming Language :: Python :: 3.9",
+     "Operating System :: OS Independent"
+]
+dependencies = [
+    "pandas >= 2.2.1",
+    "numpy >= 1.26.4",
+    "plotly >= 5.20.0",
+]
+requires-python = ">=3.10.5"
+
+[project.urls]
+Homepage = "https://github.com/JeremyColon/spc_plotly"
