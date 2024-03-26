@@ -84,7 +84,7 @@ xmr_chart.signals
 
 xmr_chart.xmr_chart
 ```
-[assets/XmR_Example.gif](assets/XmR_Example.gif)
+![assets/XmR_Example.gif](assets/XmR_Example.gif)
 
 For reference, please read [Making Sense of Data by Donald Wheeler](https://www.amazon.com/Making-Sense-Data-Donald-Wheeler/dp/0945320728) and [Twenty Things You Need To Know](https://www.amazon.com/Twenty-Things-You-Need-Know/dp/094532068X)
 
@@ -103,7 +103,7 @@ xmr_chart = xmr.XmR(
     sloped=True
 )
 ```
-[assets/XmR_Sloped_Example.png](assets/XmR_Sloped_Example.gif)
+![assets/XmR_Sloped_Example.png](assets/XmR_Sloped_Example.png)
 
 
 ### Use the Median
