@@ -1,5 +1,5 @@
 from pandas import DataFrame
-from spc_plotly.utils import rounded_value, rounding_multiple
+from spc_plotly.utils import rounded_value, rounding_multiple, calc_sloped_indexes
 
 
 def _limit_line_annotation(
@@ -109,9 +109,9 @@ def _create_limit_line_annotations(
 
         half_idx = data.shape[0] // 2
         first_half_idx = data.values[:half_idx].shape[0] // 2
-        first_half_date = first_half_idx / data.shape[0]
+        first_half_loc = first_half_idx / data.shape[0]
         second_half_idx = data.values[half_idx:].shape[0] // 2
-        second_half_date = second_half_idx / data.shape[0]
+        second_half_loc = (second_half_idx + half_idx) / data.shape[0]
 
         x_annotations = [
             _limit_line_annotation(
@@ -119,7 +119,7 @@ def _create_limit_line_annotations(
                 text=f"<b>{round(y_xmr_func[first_half_idx][1],2)} "
                 + "\u00B1"
                 + f" {round(mR_xmr_func,2)}<b>",
-                x=first_half_date,
+                x=first_half_loc,
                 xanchor="center",
                 xref="paper",
                 y=npl_upper[first_half_idx][1] + (value_range * 0.1),
@@ -131,7 +131,7 @@ def _create_limit_line_annotations(
                 text=f"<b>{round(y_xmr_func[second_half_idx+half_idx][1],2)} "
                 + "\u00B1"
                 + f" {round(mR_xmr_func,2)}<b>",
-                x=second_half_date,
+                x=second_half_loc,
                 xanchor="center",
                 xref="paper",
                 y=npl_lower[half_idx + second_half_idx][1] - (value_range * 0.1),
