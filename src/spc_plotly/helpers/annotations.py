@@ -1,5 +1,5 @@
 from pandas import DataFrame
-from spc_plotly.utils import rounded_value, rounding_multiple, calc_sloped_indexes
+from spc_plotly.utils import rounded_value, rounding_multiple
 
 
 def _limit_line_annotation(
