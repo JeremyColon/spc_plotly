@@ -84,9 +84,9 @@ def _create_limit_lines(
 
         half_idx = data.shape[0] // 2
         first_half_idx = data.values[:half_idx].shape[0] // 2
-        first_half_date = data.iloc[:half_idx].index[first_half_idx]
+        first_half_date = first_half_idx / data.shape[0]
         second_half_idx = data.values[half_idx:].shape[0] // 2
-        second_half_date = data.iloc[half_idx:].index[second_half_idx]
+        second_half_date = second_half_idx / data.shape[0]
 
         value_range = npl_upper[len(npl_upper) - 1][1] - npl_lower[0][1]
         multiple = rounding_multiple.rounding_multiple(value_range)
@@ -102,6 +102,7 @@ def _create_limit_lines(
                 "opacity": 1,
                 "path": f"M {first_half_date} {npl_lower[first_half_idx][1]} L {first_half_date} {npl_upper[first_half_idx][1]+((range_max-range_min)*.05)}",
                 "type": "path",
+                "xref": "paper",
             },
             {
                 "fillcolor": "gray",
@@ -110,6 +111,7 @@ def _create_limit_lines(
                 "opacity": 1,
                 "path": f"M {second_half_date} {npl_upper[second_half_idx+half_idx][1]} L {second_half_date} {npl_lower[second_half_idx+half_idx][1]-((range_max-range_min)*.05)}",
                 "type": "path",
+                "xref": "paper",
             },
         ]
     else:

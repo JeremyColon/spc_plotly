@@ -117,7 +117,7 @@ class XmR:
 
         test_xmr.test_x_ser_is_date(self._x_Ser)
         self._x_Ser_dt = to_datetime(self._x_Ser)
-        self._x_Ser = self._x_Ser.dt.strftime(self.custom_date_part)
+        self._x_Ser = self._x_Ser_dt.dt.strftime(self.custom_date_part)
 
         test_xmr.test_cutoff_val(x_cutoff, self._x_Ser)
         # Check if cutoff value exists

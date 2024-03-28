@@ -109,9 +109,9 @@ def _create_limit_line_annotations(
 
         half_idx = data.shape[0] // 2
         first_half_idx = data.values[:half_idx].shape[0] // 2
-        first_half_date = data.iloc[:half_idx].index[first_half_idx]
+        first_half_date = first_half_idx / data.shape[0]
         second_half_idx = data.values[half_idx:].shape[0] // 2
-        second_half_date = data.iloc[half_idx:].index[second_half_idx]
+        second_half_date = second_half_idx / data.shape[0]
 
         x_annotations = [
             _limit_line_annotation(
@@ -121,7 +121,7 @@ def _create_limit_line_annotations(
                 + f" {round(mR_xmr_func,2)}<b>",
                 x=first_half_date,
                 xanchor="center",
-                xref="x",
+                xref="paper",
                 y=npl_upper[first_half_idx][1] + (value_range * 0.1),
                 yanchor="auto",
                 yref="y",
@@ -133,7 +133,7 @@ def _create_limit_line_annotations(
                 + f" {round(mR_xmr_func,2)}<b>",
                 x=second_half_date,
                 xanchor="center",
-                xref="x",
+                xref="paper",
                 y=npl_lower[half_idx + second_half_idx][1] - (value_range * 0.1),
                 yanchor="auto",
                 yref="y",
