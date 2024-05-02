@@ -71,6 +71,16 @@ def test_cutoff_val(cutoff_val, x_Ser):
         raise ValueError(e)
 
 
+def test_begin_val(begin_val, x_Ser):
+    if begin_val is None or begin_val in x_Ser.values:
+        return True
+    else:
+        print(begin_val)
+        print(x_Ser)
+        e = f"{begin_val} not present in {x_Ser.name}"
+        raise ValueError(e)
+
+
 def test_sloped_val(sloped_val):
     if not isinstance(sloped_val, bool):
         e = f"sloped parameter must be a boolean value"
