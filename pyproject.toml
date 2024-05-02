@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "spc-plotly"
-version = "0.1.5"
+version = "0.2.0"
 description = "XmR charts with Plotly"
 readme = "README.md"
 authors = [{ name = "Jeremy Colón", email = "jeremycolon24@gmail.com" }]
