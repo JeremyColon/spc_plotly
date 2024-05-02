@@ -125,20 +125,20 @@ xmr_chart = xmr.XmR(
 
 ### Calculate Limits from Subset of Data
 
-If you want to calculate the limits from a subset of your data, use the x_cutoff parameter.
+If you want to calculate the limits from a subset of your data, use the x_cutoff and x_begin parameters.
 
 ```python
 xmr_chart = xmr.XmR(
     data=data,
     x_ser_name="Period",
     y_ser_name="Count",
+    x_begin="2022-01",
     x_cutoff="2023-06",
     xmr_function="median"
     sloped=False
 )
 ```
-This will include all data up to, and including, "2023-06". If no value is passed, the limits will be calculated using all data.
-Currently, this does not support an _x_start_, so I would recommend filtering the passed-in dataframe to start at the desired period.
+These paremeters are *inclusive*, so they will include all data between "2022-01" and "2023-06". If no value is passed, `x_begin` and `x_cutoff` will be set to the minimum and maximum values, respectively.
 
 ## Dependencies
 Plotly, Pandas, and Numpy
