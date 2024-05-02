@@ -59,13 +59,14 @@ class XmR:
         data: DataFrame,
         y_ser_name: str,
         x_ser_name: str,
+        x_begin: str = None,
         x_cutoff: str = None,
         date_part_resolution: str = "month",
         custom_date_part: str = "",
         title: str = None,
         sloped: bool = False,
         xmr_function: str = "mean",
-        chart_height: int = 1000,
+        chart_height: int = None,
     ) -> None:
         """
         Initializes an XmR Chart object.
@@ -76,8 +77,10 @@ class XmR:
             x_ser_name (str): Name of column or index containing values to plot on x-axis.
                 Column or index should represent a date, date/time, or a proxy for such
                 (e.g., increasing integer value)
+            x_begin (str): Value of x_ser_name, before which the data is excluded for purposes
+                of calculating limits. If None, minimum value is set.
             x_cutoff (str): Value of x_ser_name, after which the data is excluded for purposes
-                of calculating limits. If None, all data is included.
+                of calculating limits. If None, maximum value is set.
             date_part_resolution (str): Resolution of your data, for formatting the x-axis. Valid options:
                 - year
                 - month
@@ -126,6 +129,13 @@ class XmR:
         else:
             self.x_cutoff = x_cutoff
 
+        test_xmr.test_begin_val(x_begin, self._x_Ser)
+        # Check if cutoff value exists
+        if x_begin is None:
+            self.x_begin = self._x_Ser.min()
+        else:
+            self.x_begin = x_begin
+
         self._title = (
             f"{y_ser_name} XmR Chart by {self._x_Ser.name}" if title is None else title
         )
@@ -161,7 +171,9 @@ class XmR:
                 - dict: Contains the natural process limits and mean/median value
         """
 
-        data_for_limits = self.data.loc[self._x_Ser <= self.x_cutoff]
+        data_for_limits = self.data.loc[
+            (self._x_Ser >= self.x_begin) & (self._x_Ser <= self.x_cutoff)
+        ]
 
         mR_data_for_limits = abs(
             data_for_limits[self._y_ser_name]
