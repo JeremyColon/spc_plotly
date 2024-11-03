@@ -2,37 +2,60 @@ from pandas import Series
 import plotly.graph_objects as go
 from spc_plotly.utils import rounded_value, rounding_multiple
 
-
-def _format_xaxis(anchor: str, matches: str, showticklabels: bool):
-    """
-    X-axis formatter
-
-    Parameters:
-        anchor (str): Axis to anchor on
-        matches (str): Axis to match on
-        showticklabels (bool): Show axis ticklabels
-
-    Returns:
-        dict: Axis formatting
-    """
-    return {
-        "anchor": anchor,
-        "domain": [0.0, 1.0],
-        "automargin": True,
-        "dtick": "M1",
-        "matches": matches,
-        "showticklabels": showticklabels,
-        "tickformat": "%b\n%Y",
-        "ticklabelmode": "period",
-        "tickangle": 0,
-        "showspikes": True,
-        "spikemode": "across+toaxis",
-        "spikesnap": "cursor",
-        "showline": True,
+def _format_xaxis(x_type: str) -> dict:
+    """Format x-axis based on data type"""
+    base_format = {
         "showgrid": True,
-        "spikedash": "solid",
-        "spikecolor": "lightgreen",
+        "gridcolor": "lightgray",
+        "zeroline": False,
     }
+    
+    if x_type == "date_time":
+        base_format.update({
+            "type": "date",
+            "tickformat": "%Y-%m-%d"
+        })
+    elif x_type == "numeric":
+        base_format.update({
+            "type": "linear",
+            "tickformat": "d"
+        })
+    else:  # categorical
+        base_format.update({
+            "type": "category"
+        })
+    
+    return base_format
+# def _format_xaxis(anchor: str, matches: str, showticklabels: bool):
+#     """
+#     X-axis formatter
+
+#     Parameters:
+#         anchor (str): Axis to anchor on
+#         matches (str): Axis to match on
+#         showticklabels (bool): Show axis ticklabels
+
+#     Returns:
+#         dict: Axis formatting
+#     """
+#     return {
+#         "anchor": anchor,
+#         "domain": [0.0, 1.0],
+#         "automargin": True,
+#         "dtick": "M1",
+#         "matches": matches,
+#         "showticklabels": showticklabels,
+#         "tickformat": "%b\n%Y",
+#         "ticklabelmode": "period",
+#         "tickangle": 0,
+#         "showspikes": True,
+#         "spikemode": "across+toaxis",
+#         "spikesnap": "cursor",
+#         "showline": True,
+#         "showgrid": True,
+#         "spikedash": "solid",
+#         "spikecolor": "lightgreen",
+#     }
 
 
 def _format_yaxis(
@@ -65,8 +88,9 @@ def _format_XmR_axes(
     mR_upper: float,
     y_Ser: Series,
     mR_data: Series,
+    x_type: str,
     sloped: bool,
-) -> go.Figure:
+) -> dict:
     """
     Apply axes formats
 
@@ -82,8 +106,17 @@ def _format_XmR_axes(
         dict: Axis formatting
     """
 
-    xaxis_values = _format_xaxis(anchor="y", matches="x", showticklabels=True)
-    xaxis_mR = _format_xaxis(anchor="y2", matches="x2", showticklabels=False)
+    xaxis_values = _format_xaxis(x_type)
+    xaxis_values.update({
+        "domain": [0, 1],
+        "anchor": "y"
+    })
+    
+    xaxis_mR = _format_xaxis(x_type)
+    xaxis_mR.update({
+        "domain": [0, 1],
+        "anchor": "y2"
+    })
 
     if sloped:
         value_range = npl_upper[len(npl_upper) - 1][1] - npl_lower[0][1]

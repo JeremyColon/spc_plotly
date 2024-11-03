@@ -10,6 +10,14 @@ def test_inputs(XmR, date_parts) -> bool:
 
     return True
 
+def test_x_type(x_type: str, x_type_options: dict):
+    """Test x_type parameter"""
+    if x_type not in x_type_options:
+        raise ValueError(
+            f"x_type must be one of {list(x_type_options.keys())}"
+        )
+
+    return True
 
 def test_xmr_func_val(xmr_func_val):
     if xmr_func_val.lower() not in ["mean", "median"]:
@@ -19,11 +27,12 @@ def test_xmr_func_val(xmr_func_val):
     return True
 
 
-def test_date_part_resolution_val(date_part_resolution_val, date_parts):
-    if date_part_resolution_val.lower() not in date_parts.keys():
-        vals = list(date_parts.keys())
-        e = f"{date_part_resolution_val} not a valid date part resolution. Must be {vals}"
-        raise ValueError(e)
+def test_date_resolution(date_part_resolution: str, date_parts: dict):
+    """Test date_part_resolution parameter"""
+    if date_part_resolution not in date_parts:
+        raise ValueError(
+            f"date_part_resolution must be one of {list(date_parts.keys())}"
+        )
 
     return True
 
@@ -85,3 +94,34 @@ def test_sloped_val(sloped_val):
     if not isinstance(sloped_val, bool):
         e = f"sloped parameter must be a boolean value"
         raise ValueError(e)
+
+def test_numeric_sequence():
+    """Test numeric sequence handling"""
+    data = pd.DataFrame({
+        'position': [1, 3, 4, 7, 8],  # Note the gaps
+        'value': [10, 12, 11, 13, 15]
+    })
+    
+    with pytest.warns(UserWarning):
+        chart = xmr.XmR(
+            data=data,
+            x_ser_name='position',
+            y_ser_name='value',
+            x_type='numeric'
+        )
+
+def test_categorical_sequence():
+    """Test categorical sequence handling"""
+    data = pd.DataFrame({
+        'station': ['B', 'A', 'D', 'C'],  # Unsorted
+        'value': [10, 12, 11, 13]
+    })
+    
+    with pytest.warns(UserWarning):
+        chart = xmr.XmR(
+            data=data,
+            x_ser_name='station',
+            y_ser_name='value',
+            x_type='categorical'
+        )
+

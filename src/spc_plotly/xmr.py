@@ -11,6 +11,7 @@ from spc_plotly.helpers import (
 from spc_plotly.utils import calc_xmr_func
 from tests import test_xmr
 from plotly.graph_objects import Figure
+from plotly.subplots import make_subplots
 
 date_parts = {
     "year": "%Y",
@@ -27,29 +28,65 @@ XmR_constants = {
 }
 
 
+from pandas import DataFrame, Series, to_datetime
+from numpy import abs
+from spc_plotly.helpers import (
+    axes_formats,
+    base_traces,
+    limit_lines,
+    annotations,
+    signals,
+    menus,
+)
+from spc_plotly.utils import calc_xmr_func, validate_sequence
+from tests import test_xmr
+from plotly.graph_objects import Figure
+
+date_parts = {
+    "year": "%Y",
+    "month": "%Y-%m",
+    "day": "%Y-%m-%d",
+    "hour": "%Y-%m-%d %H",
+    "minute": "%Y-%m-%d %H:%M",
+    "custom": None,
+}
+
+x_type_options = {
+    "date_time": date_parts,
+    "numeric": None,
+    "categorical": None
+}
+
+XmR_constants = {
+    "mean": {"mR_Upper": 3.268, "npl_Constant": 2.660},
+    "median": {"mR_Upper": 3.865, "npl_Constant": 3.145},
+}
+
 class XmR:
     """
     A class representing an XmR chart.
 
     Attributes:
-        data (str): Dataframe to use for XmR chart.
-        y_ser_name (int): Name of column containing values to plot on y-axis.
-        x_ser_name (str): Name of column or index containing values to plot on x-axis.
-            Column or index should represent a date or date/time
-        x_cutoff (str): Value of x_ser_name, after which the data is excluded for purposes
-            of calculating limits. If None, all data is included.
-        date_part_resolution (str): Level of resolution to show on x-axis. This must match your data.
-            Valid options:
+        data (DataFrame): Dataframe to use for XmR chart.
+        y_ser_name (str): Name of column containing values to plot on y-axis.
+        x_ser_name (str): Name of column containing ordered values to plot on x-axis.
+            Can be temporal (dates), numerical, or categorical.
+        x_type (str): Type of x-axis data. Valid options:
+            - date_time (dates and times)
+            - numeric (ordered numbers)
+            - categorical (ordered categories)
+        date_part_resolution (str): If x_type is date_time, specify the resolution. Valid options:
             - year
-            - quarter
             - month
             - day
             - hour
             - minute
             - custom
+        custom_date_part (str): If date_part_resolution is custom, specify the format
+        x_begin (str|int): Value of x_ser_name, before which the data is excluded
+        x_cutoff (str|int): Value of x_ser_name, after which the data is excluded
         title (str): Custom chart title
-        sloped (bool): Use sloping approach for limit values. Only use this if your data
-            is expected to increase over time (e.g., energy prices).
+        sloped (bool): Use sloping approach for limit values
         xmr_function (str): Use "mean" or "median" function for calculating limit values
         chart_height (int): Adjust chart height
     """
@@ -59,53 +96,39 @@ class XmR:
         data: DataFrame,
         y_ser_name: str,
         x_ser_name: str,
-        x_begin: str = None,
-        x_cutoff: str = None,
+        x_type: str = "date_time",
         date_part_resolution: str = "month",
         custom_date_part: str = "",
+        x_begin: str | int = None,
+        x_cutoff: str | int = None,
         title: str = None,
         sloped: bool = False,
         xmr_function: str = "mean",
         chart_height: int = None,
     ) -> None:
-        """
-        Initializes an XmR Chart object.
-
-        Parameters:
-            data (str): Dataframe to use for XmR chart.
-            y_ser_name (int): Name of column containing values to plot on y-axis.
-            x_ser_name (str): Name of column or index containing values to plot on x-axis.
-                Column or index should represent a date, date/time, or a proxy for such
-                (e.g., increasing integer value)
-            x_begin (str): Value of x_ser_name, before which the data is excluded for purposes
-                of calculating limits. If None, minimum value is set.
-            x_cutoff (str): Value of x_ser_name, after which the data is excluded for purposes
-                of calculating limits. If None, maximum value is set.
-            date_part_resolution (str): Resolution of your data, for formatting the x-axis. Valid options:
-                - year
-                - month
-                - day
-                - hour
-                - minute
-                - custom
-            custom_date_part (str): If you choose custom, please specify the d3 format corresponding to your data.
-            title (str): Custom chart title
-            sloped (bool): Use sloping approach for limit values. Only use this if your data
-                is expected to increase over time (e.g., energy prices).
-            xmr_function (str): Use "mean" or "median" function for calculating limit values
-            chart_height (int): Adjust chart height
-        """
-
         self.data = data
         self.xmr_function = xmr_function.lower()
         self.sloped = sloped
-        self.date_part_resolution = date_part_resolution.lower()
-        if self.date_part_resolution == "custom":
-            self.custom_date_part = custom_date_part
-        else:
-            self.custom_date_part = date_parts.get(self.date_part_resolution, None)
+        self.x_type = x_type.lower()
+        
+        # Validate and process x-axis type
+        test_xmr.test_x_type(self.x_type, x_type_options)
+        
+        # Handle date_time specific parameters
+        if self.x_type == "date_time":
+            self.date_part_resolution = date_part_resolution.lower()
+            if self.date_part_resolution == "custom":
+                self.custom_date_part = custom_date_part
+            else:
+                self.custom_date_part = date_parts.get(self.date_part_resolution, None)
+            test_xmr.test_date_resolution(self.date_part_resolution, date_parts)
 
-        test_xmr.test_inputs(self, date_parts)
+        # Validate sequence and sort if needed
+        is_sorted, has_gaps = validate_sequence.validate_sequence(
+            data, x_ser_name, self.x_type
+        )
+        if not is_sorted:
+            self.data = self.data.sort_values(by=x_ser_name)
 
         test_xmr.test_y_ser_name_val(y_ser_name, self.data)
         self._y_ser_name = y_ser_name
@@ -118,23 +141,19 @@ class XmR:
             data[self._x_ser_name] if self._x_ser_name in data.columns else data.index
         )
 
-        test_xmr.test_x_ser_is_date(self._x_Ser)
-        self._x_Ser_dt = to_datetime(self._x_Ser)
-        self._x_Ser = self._x_Ser_dt.dt.strftime(self.custom_date_part)
+        # Convert dates if x_type is date_time
+        if self.x_type == "date_time":
+            test_xmr.test_x_ser_is_date(self._x_Ser)
+            self._x_Ser_dt = to_datetime(self._x_Ser)
+            self._x_Ser = self._x_Ser_dt.dt.strftime(self.custom_date_part)
+        else:
+            self._x_Ser_dt = self._x_Ser
 
         test_xmr.test_cutoff_val(x_cutoff, self._x_Ser)
-        # Check if cutoff value exists
-        if x_cutoff is None:
-            self.x_cutoff = self._x_Ser.max()
-        else:
-            self.x_cutoff = x_cutoff
+        self.x_cutoff = self._x_Ser.max() if x_cutoff is None else x_cutoff
 
         test_xmr.test_begin_val(x_begin, self._x_Ser)
-        # Check if cutoff value exists
-        if x_begin is None:
-            self.x_begin = self._x_Ser.min()
-        else:
-            self.x_begin = x_begin
+        self.x_begin = self._x_Ser.min() if x_begin is None else x_begin
 
         self._title = (
             f"{y_ser_name} XmR Chart by {self._x_Ser.name}" if title is None else title
@@ -259,14 +278,34 @@ class XmR:
                             of a "short run", which is defined as 3 out of 4 points closer
                             to the limit lines than they are to the mean/median line.
         """
-
-        fig_XmR = base_traces._base_traces(
-            self._x_Ser, self._x_Ser_dt, self._y_Ser, self.mR_data
+        # Create figure with secondary y-axis
+        fig_XmR = make_subplots(
+            rows=2, 
+            cols=1,
+            subplot_titles=(self._title, "Moving Range Chart"),
+            vertical_spacing=0.15
         )
+
+        # Create base traces
+        traces = base_traces._create_base_traces(
+            x_Ser=self._x_Ser,
+            y_Ser=self._y_Ser,
+            mR_data=self.mR_data,
+            x_type=self.x_type
+        )
+
+        # Add traces to subplots
+        fig_XmR.add_trace(traces[0], row=1, col=1)  # Individual values chart
+        fig_XmR.add_trace(traces[1], row=2, col=1)  # Moving range chart
+
+        individual_values_trace = fig_XmR.data[0]
+        moving_range_trace = fig_XmR.data[1]
+
         axis_formats = axes_formats._format_XmR_axes(
             npl_upper=self.npl_limit_values.get("npl_upper_limit"),
             npl_lower=self.npl_limit_values.get("npl_lower_limit"),
             mR_upper=self.mR_limit_values.get("mR_upper_limit"),
+            x_type=self.x_type,
             y_Ser=self._y_Ser,
             mR_data=self.mR_data,
             sloped=self.sloped,
@@ -310,12 +349,14 @@ class XmR:
 
         long_run_shapes, long_runs = signals._long_run_test(
             fig=fig_XmR,
+            x_type=self.x_type,
             y_xmr_func=self.npl_limit_values.get("y_xmr_func"),
             sloped=self.sloped,
         )
 
         short_run_shapes, short_runs = signals._short_run_test(
             fig_XmR,
+            x_type=self.x_type,
             npl_upper=self.npl_limit_values.get("npl_upper_limit"),
             npl_lower=self.npl_limit_values.get("npl_lower_limit"),
             y_xmr_func=self.npl_limit_values.get("y_xmr_func"),

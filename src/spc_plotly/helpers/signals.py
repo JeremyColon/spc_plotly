@@ -2,7 +2,7 @@ from plotly.graph_objects import Figure, Scatter
 from math import ceil
 from numpy import sum as numpy_sum, array
 from spc_plotly.utils import combine_paths
-
+import pandas as pd
 
 def _anomalies(
     fig: Figure,
@@ -85,6 +85,7 @@ def _short_run_test(
     npl_upper: float | list,
     npl_lower: float | list,
     y_xmr_func: float | list,
+    x_type: str,
     sloped: bool,
     fill_color: str = "purple",
     line_color: str = "blue",
@@ -120,8 +121,13 @@ def _short_run_test(
     """
     # Detect 8 consecutive points on one side of center line
     fig_data = fig.data
-    dates = [el for el in fig_data[0].x]
-    results = fig_data[0].y
+    x_values = [el for el in fig_data[0].x]
+    y_values = fig_data[0].y
+
+    # Convert dates if needed
+    if x_type == "date_time":
+        x_values = pd.to_datetime(x_values)
+        
     short_runs = []
     y_range = fig.layout.yaxis.range
 
@@ -134,12 +140,12 @@ def _short_run_test(
             (mid[0], mid[1] - ((mid[1] - lower[1]) / 2))
             for (lower, mid) in zip(npl_lower, y_xmr_func)
         ]
-        run_test_upper = results > [el[1] for el in upper_midrange]
-        run_test_lower = results < [el[1] for el in lower_midrange]
+        run_test_upper = y_values > [el[1] for el in upper_midrange]
+        run_test_lower = y_values < [el[1] for el in lower_midrange]
 
         shape_buffer = (y_range[1] - y_range[0]) * shape_buffer_pct
 
-        for i, el in enumerate(results):
+        for i, el in enumerate(y_values):
             min_i = max(0, i - 3)
             max_i = i + 1
             trailing_sum_upper = numpy_sum(run_test_upper[min_i:max_i])
@@ -147,16 +153,16 @@ def _short_run_test(
             if trailing_sum_upper >= 3:
                 short_runs.append(
                     zip(
-                        dates[min_i:max_i],
-                        results[min_i:max_i],
+                        x_values[min_i:max_i],
+                        y_values[min_i:max_i],
                         ["High"] * (max_i - min_i),
                     )
                 )
             elif trailing_sum_lower >= 3:
                 short_runs.append(
                     zip(
-                        dates[min_i:max_i],
-                        results[min_i:max_i],
+                        x_values[min_i:max_i],
+                        y_values[min_i:max_i],
                         ["Low"] * (max_i - min_i),
                     )
                 )
@@ -166,12 +172,12 @@ def _short_run_test(
     else:
         upper_midrange = y_xmr_func + ((npl_upper - y_xmr_func) / 2)
         lower_midrange = y_xmr_func - ((y_xmr_func - npl_lower) / 2)
-        run_test_upper = results > upper_midrange
-        run_test_lower = results < lower_midrange
+        run_test_upper = y_values > upper_midrange
+        run_test_lower = y_values < lower_midrange
 
         shape_buffer = (y_range[1] - y_range[0]) * shape_buffer_pct
 
-        for i, el in enumerate(results):
+        for i, el in enumerate(y_values):
             min_i = max(0, i - 3)
             max_i = i + 1
             trailing_sum_upper = numpy_sum(run_test_upper[min_i:max_i])
@@ -179,16 +185,16 @@ def _short_run_test(
             if trailing_sum_upper >= 3:
                 short_runs.append(
                     zip(
-                        dates[min_i:max_i],
-                        results[min_i:max_i],
+                        x_values[min_i:max_i],
+                        y_values[min_i:max_i],
                         ["High"] * (max_i - min_i),
                     )
                 )
             elif trailing_sum_lower >= 3:
                 short_runs.append(
                     zip(
-                        dates[min_i:max_i],
-                        results[min_i:max_i],
+                        x_values[min_i:max_i],
+                        y_values[min_i:max_i],
                         ["Low"] * (max_i - min_i),
                     )
                 )
@@ -245,6 +251,7 @@ def _short_run_test(
 def _long_run_test(
     fig: Figure,
     y_xmr_func,
+    x_type: str,
     sloped: bool,
     fill_color: str = "pink",
     line_color: str = "purple",
@@ -276,8 +283,12 @@ def _long_run_test(
             each point in the long run.
     """
     fig_data = fig.data
-    dates = [el for el in fig_data[0].x]
-    results = fig_data[0].y
+    x_values = [el for el in fig_data[0].x]
+    y_values = fig_data[0].y
+
+    # Convert x_values if needed
+    if x_type == "date_time":
+        x_values = pd.to_datetime(x_values)
 
     long_runs = []
     y_range = fig.layout.yaxis.range
@@ -285,15 +296,15 @@ def _long_run_test(
 
     if sloped:
         y_func_values = [el[1] for el in y_xmr_func]
-        run_test_upper = results > array(y_func_values)
-        run_test_lower = results < array(y_func_values)
+        run_test_upper = y_values > array(y_func_values)
+        run_test_lower = y_values < array(y_func_values)
 
-        for i, el in enumerate(results):
+        for i, el in enumerate(y_values):
             trailing_sum_upper = numpy_sum(run_test_upper[max(0, i - 7) : i + 1])
             trailing_sum_lower = numpy_sum(run_test_lower[max(0, i - 7) : i + 1])
             if trailing_sum_upper >= 8 or trailing_sum_lower >= 8:
                 long_runs.append(
-                    zip(dates[max(0, i - 7) : i + 1], results[max(0, i - 7) : i + 1])
+                    zip(x_values[max(0, i - 7) : i + 1], y_values[max(0, i - 7) : i + 1])
                 )
 
         paths = []
@@ -305,15 +316,15 @@ def _long_run_test(
 
             paths.append(path_build_list)
     else:
-        run_test_upper = results > y_xmr_func
-        run_test_lower = results < y_xmr_func
+        run_test_upper = y_values > y_xmr_func
+        run_test_lower = y_values < y_xmr_func
 
-        for i, el in enumerate(results):
+        for i, el in enumerate(y_values):
             trailing_sum_upper = numpy_sum(run_test_upper[max(0, i - 7) : i + 1])
             trailing_sum_lower = numpy_sum(run_test_lower[max(0, i - 7) : i + 1])
             if trailing_sum_upper >= 8 or trailing_sum_lower >= 8:
                 long_runs.append(
-                    zip(dates[max(0, i - 7) : i + 1], results[max(0, i - 7) : i + 1])
+                    zip(x_values[max(0, i - 7) : i + 1], y_values[max(0, i - 7) : i + 1])
                 )
 
         paths = []
